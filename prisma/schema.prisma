@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  username  String   @unique
+  email     String   @unique
+  password  String
+  posts     Post[]   @relation("UserPosts")
+  likes     Like[]   @relation("UserLikes")
+  comments  Comment[] @relation("UserComments")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+model Post {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  content   String
+  createdAt DateTime @default(now())
+  userId    String   @db.ObjectId
+  user      User     @relation("UserPosts", fields: [userId], references: [id])
+  likes     Like[]   @relation("PostLikes")
+  comments  Comment[] @relation("PostComments")
+  updatedAt DateTime @updatedAt
+}
+
+model Like {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation("UserLikes", fields: [userId], references: [id])
+  postId    String   @db.ObjectId
+  post      Post     @relation("PostLikes", fields: [postId], references: [id])
+  isActive Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String
+  createdAt DateTime @default(now())
+  userId    String   @db.ObjectId
+  user      User     @relation("UserComments", fields: [userId], references: [id])
+  postId    String   @db.ObjectId
+  post      Post     @relation("PostComments", fields: [postId], references: [id])
+  updatedAt DateTime @updatedAt
+}
