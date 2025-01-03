@@ -1,87 +1,74 @@
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { apiService } from "@/service/api-service/api.service";
+import { useQuery } from "@tanstack/react-query";
 
 type Post = {
-	id: string;
-	title: string;
-	content: string;
-	createdAt: string;
-	user: {
-		username: string;
-	};
-	likes: { id: string }[];
-	comments: { id: string; content: string; user: { username: string } }[];
+    id: string;
+    title: string;
+    content: string;
+    createdAt: string;
+    user: {
+        username: string;
+    };
+    likes: { id: string }[];
+    comments: {
+        id: string;
+        content: string;
+        user: { username: string };
+    }[];
 };
 
-const dummyPost: Post = {
-	id: "1",
-	title: "Exploring the Future of AI",
-	content:
-		"Artificial intelligence is shaping the future of technology, transforming the way we work, live, and play. From advancements in healthcare to autonomous vehicles, AI is revolutionizing industries and creating new opportunities.",
-	createdAt: "2025-01-01T10:00:00Z",
-	user: { username: "JohnDoe" },
-	likes: [{ id: "like1" }, { id: "like2" }, { id: "like3" }],
-	comments: [
-		{
-			id: "comment1",
-			content: "This is fascinating!",
-			user: { username: "Alice" },
-		},
-		{
-			id: "comment2",
-			content: "Can't wait to see what's next.",
-			user: { username: "Bob" },
-		},
-	],
-};
+export default function SinglePostPage({ params }: { params: { id: string } }) {
+    const { id } = params;
 
-export default function SinglePostPage() {
-	const post = dummyPost; // Replace with actual data fetching logic
+    const fetchPost = async ({ queryKey }: { queryKey: [string, string] }): Promise<Post> => {
+        const [, postId] = queryKey;
+        const response = await apiService.get<Post>(`/posts/${postId}`);
+        if (!response) {
+            throw new Error("Post not found");
+        }
+        return response;
+    };
 
-	return (
-		<div className="container mx-auto p-6">
-			<Card>
-				<CardHeader>
-					<CardTitle className="text-3xl font-bold">
-						{post.title}
-					</CardTitle>
-					<p className="text-sm text-gray-500">
-						By {post.user.username} •{" "}
-						{new Date(post.createdAt).toLocaleDateString()}
-					</p>
-				</CardHeader>
-				<CardContent>
-					<p className="mb-6">{post.content}</p>
-					<Separator className="my-4" />
-					<section className="mb-6">
-						<h2 className="text-xl font-bold">Likes</h2>
-						<p>{post.likes.length} people liked this post.</p>
-					</section>
-					<Separator className="my-4" />
-					<section>
-						<h2 className="text-xl font-bold mb-4">Comments</h2>
-						{post.comments.length > 0 ? (
-							<div className="space-y-4">
-								{post.comments.map((comment) => (
-									<div
-										key={comment.id}
-										className="border rounded-md p-4"
-									>
-										<p className="font-semibold">
-											{comment.user.username}
-										</p>
-										<p className="text-gray-700">
-											{comment.content}
-										</p>
-									</div>
-								))}
-							</div>
-						) : (
-							<p>No comments yet.</p>
-						)}
-					</section>
-				</CardContent>
-			</Card>
-		</div>
-	);
+    const { data: postData, isLoading, error } = useQuery({
+        queryKey: ['post', id],
+        queryFn: fetchPost,
+    });
+
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
+
+    if (error) {
+        return <div>Error: {(error as Error).message}</div>;
+    }
+
+    if (!postData) {
+        return <div>No post data available.</div>;
+    }
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>{postData.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p>{postData.content}</p>
+                <Separator />
+                <p>Posted by: {postData.user.username}</p>
+                <p>Likes: {postData.likes.length}</p>
+                <p>Comments:</p>
+                <ul>
+                    {postData.comments.map((comment) => (
+                        <li key={comment.id}>
+                            <strong>{comment.user.username}:</strong> {comment.content}
+                        </li>
+                    ))}
+                </ul>
+            </CardContent>
+        </Card>
+    );
 }

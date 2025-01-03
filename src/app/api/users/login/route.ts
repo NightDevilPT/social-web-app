@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/db";
+import { COOKIE_NAME, JWT_SECRET } from "@/config";
 
-// Environment variable for JWT secret
-const JWT_SECRET = process.env.NEXT_JWT_SECRET || "your_jwt_secret_key";
-const COOKIE_NAME = "auth_token";
 
 export async function POST(request: NextRequest) {
 	const { email, password } = await request.json();
