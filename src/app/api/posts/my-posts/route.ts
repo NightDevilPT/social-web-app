@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import prisma from "@/lib/db";
+import { COOKIE_NAME, JWT_SECRET } from "@/config";
 import { Post } from "@/interface/post";
 import { PaginatedResponse } from "@/interface/common";
 
-// Environment variable for JWT secret
-const JWT_SECRET = process.env.NEXT_JWT_SECRET || "your_jwt_secret_key";
-const COOKIE_NAME = "auth_token";
-
-export async function POST(request: NextRequest) {
+export async function GET(request: NextRequest) {
 	try {
-		// Get the token from cookies
+		// Retrieve the token from cookies
 		const token = request.cookies.get(COOKIE_NAME)?.value;
 
 		if (!token) {
@@ -32,68 +29,8 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Extract user ID from token
+		// Extract user ID from the token
 		const userId = decodedToken.id;
-
-		// Parse the request body to get post data
-		const { title, content } = await request.json();
-
-		if (!title || !content) {
-			return NextResponse.json(
-				{ message: "Title and content are required" },
-				{ status: 400 }
-			);
-		}
-
-		// Create the post in the database with relation to the user
-		const post = await prisma.post.create({
-			data: {
-				title,
-				content,
-				userId,
-			},
-		});
-
-		return NextResponse.json(
-			{
-				message: "Post created successfully",
-				post,
-			},
-			{ status: 201 }
-		);
-	} catch (error: any) {
-		console.error("Error creating post:", error.message);
-		return NextResponse.json(
-			{
-				message: "An error occurred while creating the post",
-				error: error.message || "Unknown error",
-			},
-			{ status: 500 }
-		);
-	}
-}
-
-export async function GET(request: NextRequest) {
-	try {
-		// Retrieve the token from cookies
-		const token = request.cookies.get(COOKIE_NAME)?.value;
-
-		if (!token) {
-			return NextResponse.json(
-				{ message: "Authentication token is missing" },
-				{ status: 401 }
-			);
-		}
-
-		try {
-			jwt.verify(token, JWT_SECRET) as { id: string };
-		} catch (err:any) {
-			console.log(err)
-			return NextResponse.json(
-				{ message: "Invalid or expired token" },
-				{ status: 401 }
-			);
-		}
 
 		// Extract query parameters
 		const { searchParams } = new URL(request.url);
@@ -109,9 +46,10 @@ export async function GET(request: NextRequest) {
 
 		const skip = (page - 1) * limit;
 
-		// Fetch posts with like and comment counts
+		// Fetch posts created by the user with like and comment counts
 		const [posts, totalItems] = await Promise.all([
 			prisma.post.findMany({
+				where: { userId }, // Filter by userId
 				skip,
 				take: limit,
 				orderBy: { createdAt: "desc" },
@@ -129,7 +67,7 @@ export async function GET(request: NextRequest) {
 					},
 				},
 			}),
-			prisma.post.count(),
+			prisma.post.count({ where: { userId } }), // Count posts for the user
 		]);
 
 		// Format the posts to match the Post interface

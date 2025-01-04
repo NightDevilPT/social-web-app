@@ -18,7 +18,6 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { apiService } from "@/service/api-service/api.service";
 import { toast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
 
 // Validation schema
 const loginSchema = z.object({
@@ -37,8 +36,6 @@ export function LoginForm() {
 		},
 	});
 
-	const router = useRouter();
-
 	const mutation = useMutation({
 		mutationFn: (data: LoginFormData) =>
 			apiService.post("/users/login", {
@@ -54,7 +51,7 @@ export function LoginForm() {
 			});
 
 			// Navigate to dashboard or desired page
-			router.push("/posts");
+			// router.push("/posts");
 		},
 		onError: (error: any) => {
 			toast({
