@@ -17,6 +17,8 @@ import { apiService } from "@/service/api-service/api.service";
 import React, { useState } from "react";
 import CommentSection from "./comment";
 import { PostModal } from "./post-modal";
+import { DeletePostModal } from "./delete-modal";
+import { useRouter } from "next/navigation";
 
 const fetchPost = async (postId: string): Promise<Post> => {
 	const response = await apiService.get<Post>(`/posts/${postId}`);
@@ -24,7 +26,9 @@ const fetchPost = async (postId: string): Promise<Post> => {
 };
 
 export const PostDetailCards = ({ postId }: { postId: string }) => {
+	const router = useRouter();
 	const [postModal, setPostModal] = useState<boolean>(false);
+	const [deletePostModal, setDeletePostModal] = useState<boolean>(false);
 	const {
 		data: postData,
 		isLoading,
@@ -66,7 +70,7 @@ export const PostDetailCards = ({ postId }: { postId: string }) => {
 
 	return (
 		<React.Fragment>
-			<div className={`w-full h-auto flex justify-end items-center`}>
+			<div className={`w-full h-auto flex justify-end items-center gap-5`}>
 				{postData.isAccessable && (
 					<PostModal
 						triggerText="Edit Post"
@@ -80,8 +84,21 @@ export const PostDetailCards = ({ postId }: { postId: string }) => {
 						}}
 					/>
 				)}
+				{postData.isAccessable && (
+					<DeletePostModal
+						triggerText="Delete Post"
+						postId={postData.id}
+						isOpen={deletePostModal}
+						setIsOpen={setDeletePostModal}
+						onSuccess={() => {
+							console.log("post updated");
+							setDeletePostModal(false);
+							router.push("/");
+						}}
+					/>
+				)}
 			</div>
-			<Card className="p-2 mt-3 space-y-2 border rounded-md shadow-sm cursor-pointer">
+			<Card className="p-2 mt-3 space-y-2 border-0 rounded-md shadow-sm cursor-pointer">
 				<CardHeader className="p-0 px-3 py-2 border-b">
 					<CardTitle className="text-lg font-semibold">
 						{postData.title}

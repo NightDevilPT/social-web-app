@@ -30,7 +30,7 @@ import { PostFormData, postSchema } from "@/schema/post";
 
 type PostModalProps = {
 	isOpen: boolean;
-	setIsOpen:any;
+	setIsOpen: any;
 	post?: { id: string; title: string; content: string };
 	triggerText: string;
 	onSuccess?: () => void;
@@ -41,7 +41,7 @@ export function PostModal({
 	triggerText,
 	onSuccess,
 	isOpen,
-	setIsOpen
+	setIsOpen,
 }: PostModalProps) {
 	const form = useForm<PostFormData>({
 		resolver: zodResolver(postSchema),
@@ -158,7 +158,10 @@ export function PostModal({
 							<Button
 								type="button"
 								variant="secondary"
-								onClick={() => form.reset()}
+								onClick={() => {
+									form.reset();
+									setIsOpen(false);
+								}}
 							>
 								Cancel
 							</Button>

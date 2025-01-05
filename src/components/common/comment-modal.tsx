@@ -118,7 +118,10 @@ export function CommentModal({
 							<Button
 								type="button"
 								variant="secondary"
-								onClick={() => form.reset()}
+								onClick={() => {
+									form.reset();
+									setIsOpen(false);
+								}}
 							>
 								Cancel
 							</Button>
