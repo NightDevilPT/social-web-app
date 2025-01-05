@@ -9,6 +9,7 @@ export interface Post {
 	user: {
 		username: string;
 	};
+	isAccessable?:boolean;
 	likes: number;
 	comments: number;
 	isLiked?:boolean;

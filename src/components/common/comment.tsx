@@ -1,13 +1,16 @@
 "use client";
 
+import React, { useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { CommentsApiResponse } from "@/interface/comment";
 import { apiService } from "@/service/api-service/api.service";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CommentModal } from "./comment-modal";
+import LoadingComponent from "./loading";
+import ErrorUI from "./error";
 
+// Function to fetch comments with pagination
 const fetchComments = async ({
 	postId,
 	pageParam = 1,
@@ -15,20 +18,17 @@ const fetchComments = async ({
 	postId: string;
 	pageParam?: number;
 }): Promise<CommentsApiResponse> => {
-	const response = await apiService.get<CommentsApiResponse>(
+	return await apiService.get<CommentsApiResponse>(
 		`/comment?postId=${postId}&page=${pageParam}&limit=10`
 	);
-	return response;
 };
 
-const CommentSection = ({
+const CommentSection: React.FC<{ postId: string; refresh: () => void }> = ({
 	postId,
 	refresh,
-}: {
-	postId: string;
-	refresh: any;
 }) => {
-	const [commentModal, setCommentModal] = useState<boolean>(false);
+	const [isCommentModalOpen, setCommentModalOpen] = useState<boolean>(false);
+
 	const {
 		data,
 		fetchNextPage,
@@ -46,54 +46,67 @@ const CommentSection = ({
 		initialPageParam: 1,
 	});
 
-	if (isLoading) return <p>Loading comments...</p>;
-	if (isError)
+	if (isLoading)
 		return (
-			<p className="text-red-500">
-				{error instanceof Error
-					? error.message
-					: "Something went wrong"}
-			</p>
+			<div className={`container mt-5`}>
+				<LoadingComponent />
+			</div>
 		);
+
+	if (isError) {
+		return (
+			<div className={`container mt-5`}>
+				<ErrorUI message={error.message} />
+			</div>
+		);
+	}
 
 	return (
 		<div className="space-y-4 mt-5">
-			<div className={`w-full h-auto flex justify-end items-center`}>
+			{/* Add Comment Button */}
+			<div className="w-full flex justify-end">
 				<CommentModal
 					triggerText="Add your comment"
-					setIsOpen={setCommentModal}
-					isOpen={commentModal}
+					setIsOpen={setCommentModalOpen}
+					isOpen={isCommentModalOpen}
 					onSuccess={() => {
-						console.log("comment saved");
+						console.log("Comment saved");
 						refetch();
 						refresh();
 					}}
 					postId={postId}
 				/>
 			</div>
-			{data?.pages.map((page,index) => {
-				if (page.data.length === 0)
-					return (
-						<div className={`w-full text-center text-secondary`} key={index}>
-							There is no comments
+
+			{/* Display Comments */}
+			{data?.pages.map((page, pageIndex) => (
+				<React.Fragment key={pageIndex}>
+					{page.data.length === 0 ? (
+						<div className="w-full text-center text-secondary">
+							No comments available
 						</div>
-					);
-				return page?.data.map((comment) => (
-					<Card key={comment.id} className="border-0 p-0 shadow-sm">
-						<CardContent className="p-3">
-							<span className="text-sm text-foreground">
-								{comment.content}
-							</span>
-							<div
-								className={`w-full h-auto flex justify-end items-center text-xs text-gray-500`}
+					) : (
+						page.data.map((comment) => (
+							<Card
+								key={comment.id}
+								className="border-0 shadow-sm"
 							>
-								Commented by {comment.user.username} at{" "}
-								{new Date(comment.createdAt).toLocaleString()}
-							</div>
-						</CardContent>
-					</Card>
-				));
-			})}
+								<CardContent className="p-3">
+									<span className="text-sm text-foreground">
+										{comment.content}
+									</span>
+									<div className="w-full flex justify-end text-xs text-gray-500">
+										Commented by {comment.user.username} at{" "}
+										{new Date(
+											comment.createdAt
+										).toLocaleString()}
+									</div>
+								</CardContent>
+							</Card>
+						))
+					)}
+				</React.Fragment>
+			))}
 
 			{/* Load More Button */}
 			{hasNextPage && (

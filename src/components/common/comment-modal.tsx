@@ -25,17 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { apiService } from "@/service/api-service/api.service";
 import { toast } from "@/hooks/use-toast";
-import { z } from "zod";
-
-// Validation schema for adding a comment
-const commentSchema = z.object({
-	content: z
-		.string()
-		.min(1, { message: "Comment cannot be empty" })
-		.max(500, { message: "Comment cannot exceed 500 characters" }),
-});
-
-type CommentFormData = z.infer<typeof commentSchema>;
+import { CommentFormData, commentSchema } from "@/schema/comment";
 
 interface CommentModalProps {
 	isOpen: boolean;

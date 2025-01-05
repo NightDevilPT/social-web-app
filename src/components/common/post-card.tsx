@@ -12,11 +12,11 @@ import {
 } from "../ui/card";
 import { useRouter } from "next/navigation";
 
-export const PostCard: React.FC<{ postData: Post }> = ({ postData }) => {
+export const PostCard = ({ postData }:{postData:Post}) => {
 	const router = useRouter();
 	return (
 		<Card
-			className="p-2 space-y-2 border rounded-md shadow-sm cursor-pointer"
+			className="p-2 space-y-2 border-none rounded-md shadow-sm cursor-pointer"
 			onClick={() => router.push(`/post/${postData.id}`)}
 		>
 			<CardHeader className="p-0 px-3 py-2 border-b">

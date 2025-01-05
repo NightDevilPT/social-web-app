@@ -67,17 +67,19 @@ export const PostDetailCards = ({ postId }: { postId: string }) => {
 	return (
 		<React.Fragment>
 			<div className={`w-full h-auto flex justify-end items-center`}>
-				<PostModal
-					triggerText="Edit Post"
-					post={postData}
-					isOpen={postModal}
-					setIsOpen={setPostModal}
-					onSuccess={() => {
-						console.log("post updated");
-						setPostModal(false);
-						refetch();
-					}}
-				/>
+				{postData.isAccessable && (
+					<PostModal
+						triggerText="Edit Post"
+						post={postData}
+						isOpen={postModal}
+						setIsOpen={setPostModal}
+						onSuccess={() => {
+							console.log("post updated");
+							setPostModal(false);
+							refetch();
+						}}
+					/>
+				)}
 			</div>
 			<Card className="p-2 mt-3 space-y-2 border rounded-md shadow-sm cursor-pointer">
 				<CardHeader className="p-0 px-3 py-2 border-b">
@@ -103,7 +105,9 @@ export const PostDetailCards = ({ postId }: { postId: string }) => {
 							<BiSolidCommentDetail className={`w-4 h-4`} />
 						</span>
 						<button
-							className={`grid grid-cols-2 gap-1 rounded-md ${isLoading&&'opacity-45'}`}
+							className={`grid grid-cols-2 gap-1 rounded-md ${
+								isLoading && "opacity-45"
+							}`}
 							onClick={togglePostLike}
 							disabled={isLoading}
 						>

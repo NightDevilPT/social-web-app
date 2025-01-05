@@ -1,6 +1,5 @@
 "use client";
 
-import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -19,23 +18,7 @@ import Link from "next/link";
 import { apiService } from "@/service/api-service/api.service";
 import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-
-// Validation schema
-const signupSchema = z
-	.object({
-		username: z.string().min(2, "Username must be at least 2 characters."),
-		email: z.string().email("Invalid email address."),
-		password: z.string().min(8, "Password must be at least 8 characters."),
-		confirmPassword: z
-			.string()
-			.min(8, "Password must be at least 8 characters."),
-	})
-	.refine((data) => data.password === data.confirmPassword, {
-		message: "Passwords must match.",
-		path: ["confirmPassword"],
-	});
-
-type SignupFormData = z.infer<typeof signupSchema>;
+import { SignupFormData, signupSchema } from "@/schema/signup";
 
 export function SignupForm() {
 	const router = useRouter();

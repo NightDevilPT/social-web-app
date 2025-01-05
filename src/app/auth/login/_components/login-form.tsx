@@ -1,6 +1,5 @@
 "use client";
 
-import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -19,14 +18,7 @@ import Link from "next/link";
 import { apiService } from "@/service/api-service/api.service";
 import { toast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-
-// Validation schema
-const loginSchema = z.object({
-	email: z.string().email("Invalid email address."),
-	password: z.string().min(8, "Password must be at least 8 characters."),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import { LoginFormData, loginSchema } from "@/schema/login";
 
 export function LoginForm() {
 	const form = useForm<LoginFormData>({
@@ -46,14 +38,12 @@ export function LoginForm() {
 			}),
 		onSuccess: (data) => {
 			console.log(data, "Login");
+			router.push("/"); // Navigate to the desired route
 			toast({
 				title: "Success",
 				description: "Login successful!",
 				variant: "success",
 			});
-
-			// Ensure navigation is handled correctly
-			router.push("/"); // Navigate to the desired route
 		},
 		onError: (error: any) => {
 			toast({

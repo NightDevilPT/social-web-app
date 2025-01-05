@@ -4,46 +4,49 @@ import Link from "next/link";
 import React from "react";
 import { usePathname } from "next/navigation";
 
+// Enum for defining routes and their labels
 export const RoutesEnums = {
-  "/": "Posts",
-  "/my-posts": "My Posts",
+	"/": "Posts",
+	"/my-posts": "My Posts",
 };
 
-const NavBar = () => {
-  const pathname = usePathname(); // Get the current route
+const NavBar: React.FC = () => {
+	const pathname = usePathname(); // Retrieve the current route
 
-  return (
-    <nav className="container h-full flex justify-between items-center">
-      {/* Logo Section */}
-      <div className="w-auto h-auto grid grid-cols-0 relative">
-        <div className="w-auto h-auto text-4xl text-primary relative">SWA</div>
-        <div className="w-auto h-auto text-xs text-foreground relative bottom-1">
-          Social Web App
-        </div>
-      </div>
+	return (
+		<nav className="container h-full flex justify-between items-center">
+			{/* Logo Section */}
+			<div className="flex flex-col">
+				<span className="text-4xl font-bold text-primary">SWA</span>
+				<span className="text-xs text-foreground">Social Web App</span>
+			</div>
 
-      {/* Navigation Links */}
-      <div className="w-auto h-auto flex justify-center items-center gap-3">
-        {Object.entries(RoutesEnums).map(([path, label]) => (
-          <Link
-            key={path}
-            href={path}
-            className={`px-3 text-sm py-1 rounded ${
-              pathname === path
-                ? "bg-primary text-black"
-                : "text-foreground hover:text-primary"
-            }`}
-          >
-            {label}
-          </Link>
-        ))}
-      </div>
+			{/* Navigation Links */}
+			<div className="flex gap-3">
+				{Object.entries(RoutesEnums).map(([path, label]) => (
+					<Link
+						key={path}
+						href={path}
+						className={`px-3 py-1 text-sm rounded transition ${
+							pathname === path
+								? "bg-primary text-black"
+								: "text-foreground hover:text-primary"
+						}`}
+					>
+						{label}
+					</Link>
+				))}
+			</div>
 
-      <div className={`w-8 h-8 text-sm flex justify-center items-center text-foreground p-2 rounded-full cursor-pointer bg-card hover:bg-card`}>
-        N
-      </div>
-    </nav>
-  );
+			{/* Profile Icon */}
+			<div
+				className="w-8 h-8 flex items-center justify-center text-sm text-foreground p-2 rounded-full cursor-pointer bg-card hover:bg-card"
+				title="Profile"
+			>
+				N
+			</div>
+		</nav>
+	);
 };
 
 export default NavBar;

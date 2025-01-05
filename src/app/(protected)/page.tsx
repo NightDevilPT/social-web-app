@@ -9,18 +9,16 @@ import ErrorUI from "@/components/common/error";
 import { PostModal } from "@/components/common/post-modal";
 import { PostCard } from "@/components/common/post-card";
 
-const fetchPosts = async (page = 1) => {
-	const response = await apiService.get<PostsApiResponse>(
-		`/posts?page=${page}&limit=${10}`
+// Function to fetch posts with pagination
+const fetchPosts = async (page: number = 1): Promise<PostsApiResponse> => {
+	return await apiService.get<PostsApiResponse>(
+		`/posts?page=${page}&limit=10`
 	);
-	return response;
 };
-
 
 const PostsPage: React.FC = () => {
 	const [page, setPage] = useState<number>(1);
-	const [openCreatePostModal, setOpenCreatePostModal] =
-		useState<boolean>(false);
+	const [isPostModalOpen, setIsPostModalOpen] = useState<boolean>(false);
 
 	const { data, isLoading, isError, error, isFetching, refetch } = useQuery({
 		queryKey: ["posts", page],
@@ -29,34 +27,38 @@ const PostsPage: React.FC = () => {
 
 	return (
 		<div className="container h-full p-6">
-			{!isError && (
-				<React.Fragment>
-					<div
-						className={`w-full h-auto flex justify-between items-center`}
-					>
-						<h1 className="text-2xl font-bold mb-6">Posts</h1>
+			{!isError ? (
+				<>
+					{/* Header Section */}
+					<div className="w-full flex justify-between items-center mb-6">
+						<h1 className="text-2xl font-bold">Posts</h1>
 						<PostModal
-							isOpen={openCreatePostModal}
-							setIsOpen={setOpenCreatePostModal}
+							isOpen={isPostModalOpen}
+							setIsOpen={setIsPostModalOpen}
 							triggerText="Create Post"
 							onSuccess={() => {
 								console.log("Post created!");
 								refetch();
-								setOpenCreatePostModal(false);
+								setIsPostModalOpen(false);
 							}}
 						/>
 					</div>
-					{!isLoading && (
+
+					{/* Posts Grid */}
+					{!isLoading ? (
 						<div className="grid grid-cols-4 max-2xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-6">
 							{data?.data.map((post) => (
 								<PostCard key={post.id} postData={post} />
 							))}
 						</div>
+					) : (
+						<LoadingComponent />
 					)}
-					{isLoading && <LoadingComponent />}
+
+					{/* Pagination Controls */}
 					<div className="flex justify-between items-center mt-6">
 						<button
-							onClick={() => setPage((pre) => pre - 1)}
+							onClick={() => setPage((prev) => prev - 1)}
 							disabled={!data?.meta.hasPreviousPage || isFetching}
 							className={`px-4 py-2 bg-blue-500 text-white rounded-md ${
 								!data?.meta.hasPreviousPage
@@ -68,7 +70,7 @@ const PostsPage: React.FC = () => {
 						</button>
 						<span className="text-foreground">Page {page}</span>
 						<button
-							onClick={() => setPage((pre) => pre + 1)}
+							onClick={() => setPage((prev) => prev + 1)}
 							disabled={!data?.meta.hasNextPage || isFetching}
 							className={`px-4 py-2 bg-blue-500 text-white rounded-md ${
 								!data?.meta.hasNextPage
@@ -79,15 +81,15 @@ const PostsPage: React.FC = () => {
 							Next
 						</button>
 					</div>
-				</React.Fragment>
-			)}
-			{isError && (
+				</>
+			) : (
+				// Error UI
 				<ErrorUI
 					message={
 						error?.message ||
 						"Failed to load posts. Please try again later."
 					}
-					onRetry={() => refetch()} // Retry fetching posts
+					onRetry={refetch}
 				/>
 			)}
 		</div>

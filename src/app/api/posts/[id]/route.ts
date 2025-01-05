@@ -23,9 +23,9 @@ async function getPostHandler(
 
 		// Fetch the post by ID
 		const post = await prisma.post.findUnique({
-			where: { id: postId, userId },
+			where: { id: postId },
 			include: {
-				user: { select: { username: true } },
+				user: { select: { username: true,id:true } },
 				likes: { where: { userId }, select: { isActive: true } }, // Check if the user has liked this post
 				_count: {
 					select: {
@@ -52,6 +52,7 @@ async function getPostHandler(
 			user: { username: post.user.username },
 			likes: post._count.likes,
 			comments: post._count.comments,
+			isAccessable:post.user.id ===userId,
 			isLiked: post.likes.some((like) => like.isActive), // Check if the user has liked the post
 		};
 
