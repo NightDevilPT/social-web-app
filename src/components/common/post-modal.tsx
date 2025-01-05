@@ -26,7 +26,6 @@ import {
 } from "@/components/ui/dialog";
 import { apiService } from "@/service/api-service/api.service";
 import { toast } from "@/hooks/use-toast";
-import { z } from "zod";
 import { PostFormData, postSchema } from "@/schema/post";
 
 type PostModalProps = {

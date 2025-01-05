@@ -4,7 +4,7 @@ import { CommentsApiResponse } from "@/interface/comment";
 import { apiService } from "@/service/api-service/api.service";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CommentModal } from "./comment-modal";
 
@@ -71,10 +71,10 @@ const CommentSection = ({
 					postId={postId}
 				/>
 			</div>
-			{data?.pages.map((page) => {
+			{data?.pages.map((page,index) => {
 				if (page.data.length === 0)
 					return (
-						<div className={`w-full text-center text-secondary`}>
+						<div className={`w-full text-center text-secondary`} key={index}>
 							There is no comments
 						</div>
 					);
