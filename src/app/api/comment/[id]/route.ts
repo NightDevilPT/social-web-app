@@ -1,39 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import prisma from "@/lib/db";
-import { COOKIE_NAME, JWT_SECRET } from "@/config";
+import { authMiddleware } from "@/lib/auth-middleware";
 
-export async function PUT(
+async function updateCommentHandler(
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
-		// Retrieve the token from cookies
-		const token = request.cookies.get(COOKIE_NAME)?.value;
+		const userId = (request as any).userId; // Access userId from middleware
 
-		if (!token) {
-			return NextResponse.json(
-				{ message: "Authentication token is missing" },
-				{ status: 401 }
-			);
-		}
-
-		// Verify the JWT token
-		let decodedToken;
-		try {
-			decodedToken = jwt.verify(token, JWT_SECRET) as { id: string };
-		} catch (err: any) {
-			console.log(err);
-			return NextResponse.json(
-				{ message: "Invalid or expired token" },
-				{ status: 401 }
-			);
-		}
-
-		// Extract user ID from the token
-		const userId = decodedToken.id;
-
-		// Parse request body
 		const body = await request.json();
 		const commentId = (await params).id;
 		const { content } = body;
@@ -104,37 +79,13 @@ export async function PUT(
 	}
 }
 
-export async function DELETE(
+async function deleteCommentHandler(
 	request: NextRequest,
 	{ params }: { params: Promise<{ id: string }> }
 ) {
 	try {
-		// Retrieve the token from cookies
-		const token = request.cookies.get(COOKIE_NAME)?.value;
+		const userId = (request as any).userId; // Access userId from middleware
 
-		if (!token) {
-			return NextResponse.json(
-				{ message: "Authentication token is missing" },
-				{ status: 401 }
-			);
-		}
-
-		// Verify the JWT token
-		let decodedToken;
-		try {
-			decodedToken = jwt.verify(token, JWT_SECRET) as { id: string };
-		} catch (err: any) {
-			console.log(err);
-			return NextResponse.json(
-				{ message: "Invalid or expired token" },
-				{ status: 401 }
-			);
-		}
-
-		// Extract user ID from the token
-		const userId = decodedToken.id;
-
-		// Extract comment ID from route parameters
 		const commentId = (await params).id;
 
 		if (!commentId) {
@@ -183,3 +134,6 @@ export async function DELETE(
 		);
 	}
 }
+
+export const DELETE = authMiddleware(deleteCommentHandler);
+export const PUT = authMiddleware(updateCommentHandler);

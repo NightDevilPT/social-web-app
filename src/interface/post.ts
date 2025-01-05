@@ -11,6 +11,7 @@ export interface Post {
 	};
 	likes: number;
 	comments: number;
+	isLiked?:boolean;
 }
 
 // Paginated comments response

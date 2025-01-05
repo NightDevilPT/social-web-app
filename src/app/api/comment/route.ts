@@ -1,34 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import prisma from "@/lib/db";
-import { COOKIE_NAME, JWT_SECRET } from "@/config";
+import { authMiddleware } from "@/lib/auth-middleware";
 
-export async function POST(request: NextRequest) {
+async function addCommentHandler(request: NextRequest) {
 	try {
-		// Retrieve the token from cookies
-		const token = request.cookies.get(COOKIE_NAME)?.value;
-
-		if (!token) {
-			return NextResponse.json(
-				{ message: "Authentication token is missing" },
-				{ status: 401 }
-			);
-		}
-
-		// Verify the JWT token
-		let decodedToken;
-		try {
-			decodedToken = jwt.verify(token, JWT_SECRET) as { id: string };
-		} catch (err: any) {
-			console.log(err);
-			return NextResponse.json(
-				{ message: "Invalid or expired token" },
-				{ status: 401 }
-			);
-		}
-
-		// Extract user ID from the token
-		const userId = decodedToken.id;
+		const userId = (request as any).userId; // Access userId from middleware
 
 		// Parse request body
 		const body = await request.json();
@@ -86,27 +62,8 @@ export async function POST(request: NextRequest) {
 	}
 }
 
-export async function GET(request: NextRequest) {
+async function getCommentsHandler(request: NextRequest) {
 	try {
-		// Retrieve the token from cookies
-		const token = request.cookies.get(COOKIE_NAME)?.value;
-
-		if (!token) {
-			return NextResponse.json(
-				{ message: "Authentication token is missing" },
-				{ status: 401 }
-			);
-		}
-
-		// Verify the JWT token
-		const decodedToken = jwt.verify(token, JWT_SECRET) as { id: string };
-		if (!decodedToken) {
-			return NextResponse.json(
-				{ message: "Invalid or expired token" },
-				{ status: 401 }
-			);
-		}
-
 		// Extract query parameters
 		const { searchParams } = new URL(request.url);
 		const postId = searchParams.get("postId");
@@ -166,7 +123,7 @@ export async function GET(request: NextRequest) {
 		const totalPages = Math.ceil(totalComments / limit);
 
 		const response = {
-			comments: formattedComments,
+			data: formattedComments,
 			meta: {
 				page,
 				limit,
@@ -189,3 +146,6 @@ export async function GET(request: NextRequest) {
 		);
 	}
 }
+
+export const GET = authMiddleware(getCommentsHandler);
+export const POST = authMiddleware(addCommentHandler);

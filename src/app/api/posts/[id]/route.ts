@@ -1,37 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import prisma from "@/lib/db";
-import { COOKIE_NAME, JWT_SECRET } from "@/config";
 import { Post } from "@/interface/post";
+import { authMiddleware } from "@/lib/auth-middleware";
 
-export async function GET(
+// GET Handler
+async function getPostHandler(
 	request: NextRequest,
-	{ params }: { params: Promise<{ id: string }> }
+	{ params }: { params: Promise<{ id: string }> } // Corrected type for params
 ) {
 	try {
-		// Retrieve the token from cookies
-		const token = request.cookies.get(COOKIE_NAME)?.value;
-
-		if (!token) {
-			return NextResponse.json(
-				{ message: "Authentication token is missing" },
-				{ status: 401 }
-			);
-		}
-
-		// Verify the JWT token
-		try {
-			jwt.verify(token, JWT_SECRET) as { id: string };
-		} catch (err: any) {
-			console.error("Error adding comment:", (err as Error)?.message);
-			return NextResponse.json(
-				{ message: "Invalid or expired token" },
-				{ status: 401 }
-			);
-		}
-
-		// Extract the post ID from route parameters
 		const postId = (await params).id;
+		const userId = (request as any).userId;
+
+		console.log(postId, userId, "IDIDIDIDI");
 
 		if (!postId) {
 			return NextResponse.json(
@@ -42,16 +23,13 @@ export async function GET(
 
 		// Fetch the post by ID
 		const post = await prisma.post.findUnique({
-			where: { id: postId },
+			where: { id: postId, userId },
 			include: {
 				user: { select: { username: true } },
+				likes: { where: { userId }, select: { isActive: true } }, // Check if the user has liked this post
 				_count: {
 					select: {
-						likes: {
-							where: {
-								isActive: true,
-							},
-						},
+						likes: { where: { isActive: true } },
 						comments: true,
 					},
 				},
@@ -65,7 +43,6 @@ export async function GET(
 			);
 		}
 
-		// Format the post data
 		const formattedPost: Post = {
 			id: post.id,
 			title: post.title,
@@ -75,11 +52,12 @@ export async function GET(
 			user: { username: post.user.username },
 			likes: post._count.likes,
 			comments: post._count.comments,
+			isLiked: post.likes.some((like) => like.isActive), // Check if the user has liked the post
 		};
 
 		return NextResponse.json(formattedPost);
 	} catch (error: any) {
-		console.error("Error adding comment:", (error as Error)?.message);
+		console.error("Error fetching post:", error.message);
 		return NextResponse.json(
 			{
 				message: "An error occurred while fetching the post",
@@ -90,38 +68,14 @@ export async function GET(
 	}
 }
 
-export async function PUT(
+// PUT Handler
+async function updatePostHandler(
 	request: NextRequest,
-	{ params }: { params: Promise<{ id: string }> }
+	{ params }: { params: Promise<{ id: string }> } // Corrected type for params
 ) {
 	try {
-		// Retrieve the token from cookies
-		const token = request.cookies.get(COOKIE_NAME)?.value;
-
-		if (!token) {
-			return NextResponse.json(
-				{ message: "Authentication token is missing" },
-				{ status: 401 }
-			);
-		}
-
-		// Verify the JWT token
-		let decodedToken;
-		try {
-			decodedToken = jwt.verify(token, JWT_SECRET) as { id: string };
-		} catch (error: any) {
-			console.error("Error adding comment:", (error as Error)?.message);
-			return NextResponse.json(
-				{ message: "Invalid or expired token" },
-				{ status: 401 }
-			);
-		}
-
-		// Extract user ID from the token
-		const userId = decodedToken.id;
-
-		// Extract the post ID from route parameters
 		const postId = (await params).id;
+		const userId = (request as any).userId;
 
 		if (!postId) {
 			return NextResponse.json(
@@ -130,10 +84,9 @@ export async function PUT(
 			);
 		}
 
-		// Parse the request body
 		const body = await request.json();
 
-		// Fetch the post to ensure it exists and belongs to the user
+		// Fetch the post
 		const post = await prisma.post.findUnique({
 			where: { id: postId },
 		});
@@ -152,7 +105,6 @@ export async function PUT(
 			);
 		}
 
-		// Update the post in the database
 		const updatedPost = await prisma.post.update({
 			where: { id: postId },
 			data: {
@@ -173,7 +125,7 @@ export async function PUT(
 			},
 		});
 	} catch (error: any) {
-		console.error("Error adding comment:", (error as Error)?.message);
+		console.error("Error updating post:", error.message);
 		return NextResponse.json(
 			{
 				message: "An error occurred while updating the post",
@@ -184,38 +136,14 @@ export async function PUT(
 	}
 }
 
-export async function DELETE(
+// DELETE Handler
+async function deletePostHandler(
 	request: NextRequest,
-	{ params }: { params: Promise<{ id: string }> }
+	{ params }: { params: Promise<{ id: string }> } // Corrected type for params
 ) {
 	try {
-		// Retrieve the token from cookies
-		const token = request.cookies.get(COOKIE_NAME)?.value;
-
-		if (!token) {
-			return NextResponse.json(
-				{ message: "Authentication token is missing" },
-				{ status: 401 }
-			);
-		}
-
-		// Verify the JWT token
-		let decodedToken;
-		try {
-			decodedToken = jwt.verify(token, JWT_SECRET) as { id: string };
-		} catch (error: any) {
-			console.error("Error adding comment:", (error as Error)?.message);
-			return NextResponse.json(
-				{ message: "Invalid or expired token" },
-				{ status: 401 }
-			);
-		}
-
-		// Extract user ID from the token
-		const userId = decodedToken.id;
-
-		// Extract the post ID from route parameters
 		const postId = (await params).id;
+		const userId = (request as any).userId;
 
 		if (!postId) {
 			return NextResponse.json(
@@ -224,7 +152,6 @@ export async function DELETE(
 			);
 		}
 
-		// Fetch the post to ensure it exists and belongs to the user
 		const post = await prisma.post.findUnique({
 			where: { id: postId },
 		});
@@ -256,7 +183,7 @@ export async function DELETE(
 			message: "Post and related data deleted successfully",
 		});
 	} catch (error: any) {
-		console.error("Error adding comment:", (error as Error)?.message);
+		console.error("Error deleting post:", error.message);
 		return NextResponse.json(
 			{
 				message: "An error occurred while deleting the post",
@@ -266,3 +193,8 @@ export async function DELETE(
 		);
 	}
 }
+
+// Export Handlers
+export const GET = authMiddleware(getPostHandler);
+export const PUT = authMiddleware(updatePostHandler);
+export const DELETE = authMiddleware(deletePostHandler);

@@ -18,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { apiService } from "@/service/api-service/api.service";
 import { toast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 // Validation schema
 const loginSchema = z.object({
@@ -35,6 +36,7 @@ export function LoginForm() {
 			password: "",
 		},
 	});
+	const router = useRouter();
 
 	const mutation = useMutation({
 		mutationFn: (data: LoginFormData) =>
@@ -43,15 +45,15 @@ export function LoginForm() {
 				password: data.password,
 			}),
 		onSuccess: (data) => {
-      console.log(data,'Login')
+			console.log(data, "Login");
 			toast({
 				title: "Success",
 				description: "Login successful!",
 				variant: "success",
 			});
 
-			// Navigate to dashboard or desired page
-			// router.push("/posts");
+			// Ensure navigation is handled correctly
+			router.push("/"); // Navigate to the desired route
 		},
 		onError: (error: any) => {
 			toast({

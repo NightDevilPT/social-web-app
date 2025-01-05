@@ -62,3 +62,25 @@ body {
 		--chart-5: 340 75% 55%;
 	}
 }
+
+.loading-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	height: 100vh;
+	background: #f9f9f9;
+}
+
+.loader {
+	display: flex;
+	margin: 1em 0;
+}
+
+.loading-text {
+	font-size: 1.2rem;
+	font-weight: 500;
+	color: #333;
+	margin-top: 0.5em;
+	text-align: center;
+}

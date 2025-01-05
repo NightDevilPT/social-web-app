@@ -18,6 +18,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { apiService } from "@/service/api-service/api.service";
 import { toast } from "@/hooks/use-toast";
+import { useRouter } from "next/navigation";
 
 // Validation schema
 const signupSchema = z
@@ -37,6 +38,7 @@ const signupSchema = z
 type SignupFormData = z.infer<typeof signupSchema>;
 
 export function SignupForm() {
+	const router = useRouter();
 	const form = useForm<SignupFormData>({
 		resolver: zodResolver(signupSchema),
 		defaultValues: {
@@ -55,6 +57,7 @@ export function SignupForm() {
 				password: data.password,
 			}),
 		onSuccess: () => {
+			router.push("/auth/login")
 			toast({
 				title: "Success",
 				description: "User registered successfully!",

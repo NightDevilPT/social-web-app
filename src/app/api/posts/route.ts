@@ -1,39 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import prisma from "@/lib/db";
 import { Post } from "@/interface/post";
 import { PaginatedResponse } from "@/interface/common";
+import { authMiddleware } from "@/lib/auth-middleware";
 
-// Environment variable for JWT secret
-const JWT_SECRET = process.env.NEXT_JWT_SECRET || "your_jwt_secret_key";
-const COOKIE_NAME = "auth_token";
-
-export async function POST(request: NextRequest) {
+// POST Handler
+async function createPostHandler(request: NextRequest) {
 	try {
-		// Get the token from cookies
-		const token = request.cookies.get(COOKIE_NAME)?.value;
-
-		if (!token) {
-			return NextResponse.json(
-				{ message: "Authentication token is missing" },
-				{ status: 401 }
-			);
-		}
-
-		// Verify the JWT token
-		let decodedToken;
-		try {
-			decodedToken = jwt.verify(token, JWT_SECRET) as { id: string };
-		} catch (err: any) {
-			console.log(err);
-			return NextResponse.json(
-				{ message: "Invalid or expired token" },
-				{ status: 401 }
-			);
-		}
-
-		// Extract user ID from token
-		const userId = decodedToken.id;
+		const userId = (request as any).userId; // Access user ID from middleware
 
 		// Parse the request body to get post data
 		const { title, content } = await request.json();
@@ -45,7 +19,7 @@ export async function POST(request: NextRequest) {
 			);
 		}
 
-		// Create the post in the database with relation to the user
+		// Create the post in the database
 		const post = await prisma.post.create({
 			data: {
 				title,
@@ -73,29 +47,11 @@ export async function POST(request: NextRequest) {
 	}
 }
 
-export async function GET(request: NextRequest) {
+// GET Handler
+async function fetchPostsHandler(request: NextRequest) {
 	try {
-		// Retrieve the token from cookies
-		const token = request.cookies.get(COOKIE_NAME)?.value;
+		const userId = (request as any).userId; // Access user ID from middleware
 
-		if (!token) {
-			return NextResponse.json(
-				{ message: "Authentication token is missing" },
-				{ status: 401 }
-			);
-		}
-
-		try {
-			jwt.verify(token, JWT_SECRET) as { id: string };
-		} catch (err:any) {
-			console.log(err)
-			return NextResponse.json(
-				{ message: "Invalid or expired token" },
-				{ status: 401 }
-			);
-		}
-
-		// Extract query parameters
 		const { searchParams } = new URL(request.url);
 		const page = parseInt(searchParams.get("page") || "1", 10);
 		const limit = parseInt(searchParams.get("limit") || "10", 10);
@@ -117,13 +73,10 @@ export async function GET(request: NextRequest) {
 				orderBy: { createdAt: "desc" },
 				include: {
 					user: { select: { username: true } },
+					likes: { where: { userId }, select: { isActive: true } }, // Check if the user has liked this post
 					_count: {
 						select: {
-							likes: {
-								where: {
-									isActive: true,
-								},
-							},
+							likes: { where: { isActive: true } },
 							comments: true,
 						},
 					},
@@ -142,6 +95,7 @@ export async function GET(request: NextRequest) {
 			user: { username: post.user.username },
 			likes: post._count.likes,
 			comments: post._count.comments,
+			isLiked: post.likes.some((like) => like.isActive), // Check if the user has liked the post
 		}));
 
 		// Build the meta object
@@ -173,3 +127,6 @@ export async function GET(request: NextRequest) {
 		);
 	}
 }
+
+export const POST = authMiddleware(createPostHandler);
+export const GET = authMiddleware(fetchPostsHandler);
